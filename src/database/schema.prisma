@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole{
+  ADMIN
+  USER
+}
+
+enum StoreRoles {
+  Admin
+  inventory
+  support
+  Common
+}
+
+model Question {
+  id String @id @default(uuid())
+  imgUrl String[]
+  content String
+  user User @relation(fields: [userId],references: [id])
+  userId String
+  answer Answer?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  isAnswered Boolean? @default(false)
+}
+
+model Answer {
+  id String @id @default(uuid())
+  content String
+  imgUrl String[]
+  user User @relation(fields: [userId],references: [id])
+  userId String
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  question Question @relation(fields: [questionId], references: [id])
+  questionId String @unique
+}
+
+model Profile {
+  id            String      @id @default(uuid())
+  nickname      String   @default("Username")
+  address       String[]
+  userCurrentLocation String? @default("")
+  currentAddress String? @default("")
+  phoneNumber   String   @default("")
+  paymentMethod String   @default("")
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String      @unique
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Store {
+  id            String          @id @default(uuid())
+  name          String       @unique
+  users         User[]
+}
+
+
+model User {
+  id             String             @id @default(uuid())
+  firstName      String
+  lastName       String
+  seller Boolean @default(false)
+  allowCurrentLocation Boolean @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  store Store? @relation(fields: [storeId], references: [id])
+  storeId String? @unique
+  role UserRole @default(USER)
+  questions Question[]
+  answers Answer[]
+  profile        Profile?
+  wishlist       WishList?
+  wishlistId     Int?            @unique
+  sellinglist    SellingList?
+  sellinglistId  Int?            @unique
+  viewedProducts ViewedProduct[]
+  shoppingBasket ShoppingBasket[]
+  basketSummary BasketSummary?
+  basketSummaryId Int?
+}
+
+model Product {
+  id              String             @id @default(uuid())
+  name            String
+  price           Int
+  description     String[]
+  detailImgs      String[]
+  manufacturer    String
+  category_name   String
+  isDiscounting Boolean? @default(false)
+  discountPrice Int? @default(0)
+  discountRatio Int? @default(0)
+  status          String?
+  seller String
+  viewed_count    Int             @default(0)
+  inventory       Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  category        Category        @relation(fields: [categoryId], references: [id])
+  categoryId      Int
+  ShoppingBasket ShoppingBasket[]
+  WishList        WishList?       @relation(fields: [wishListId], references: [id])
+  wishListId      Int?
+  SellingList     SellingList?    @relation(fields: [sellingListId], references: [id])
+  sellingListId   Int?
+  viewedProduct   ViewedProduct?  @relation(fields: [viewedProductId], references: [id])
+  viewedProductId Int?
+  productDeadline ProductDeadline?
+}
+
+model WishList {
+  id       Int       @id @default(autoincrement())
+  user     User      @relation(fields: [userId], references: [id])
+  userId   String       @unique
+  products Product[]
+}
+
+model SellingList {
+  id       Int       @id @default(autoincrement())
+  user     User?     @relation(fields: [userId], references: [id])
+  userId   String?      @unique
+  products Product[]
+}
+
+model ShoppingBasket{
+  product Product @relation(fields: [productId],references: [id])
+  productId String
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  quantity Int @default(0)
+  @@id([userId,productId])
+}
+
+model BasketSummary {
+  user          User? @relation(fields: [userId], references: [id])
+  userId        String @id
+  totalPrice    Int @default(0)
+  totalDiscount Int @default(0)
+  finalPay      Int @default(0)
+}
+
+
+model ViewedProduct {
+  id       Int       @id @default(autoincrement())
+  viewedAt DateTime  @default(now())
+  user     User      @relation(fields: [userId], references: [id])
+  products Product[]
+  userId   String       @unique
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  imgUrl String @default("")
+  name     String    @unique
+  products Product[]
+}
+
+model ProductDeadline{
+  id String @id @default(uuid())
+  deadline DateTime @default(now())
+  product Product @relation(fields: [productId], references: [id])
+  productId String @unique
+}
+
