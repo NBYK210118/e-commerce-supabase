@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 import {
   addProduct,
   deleteSellingProducts,
@@ -14,10 +14,10 @@ import {
   updateProduct,
   updateProductLike,
   updateProductStatus,
-} from './product_thunk';
+} from "./product_thunk";
 
 export const Products = createSlice({
-  name: 'products',
+  name: "products",
   initialState: {
     currentProduct: null,
     currentStars: 5,
@@ -29,7 +29,7 @@ export const Products = createSlice({
     sellinglist: [],
     loading: false,
     selectedProductId: null,
-    error: '',
+    error: "",
   },
   reducers: {
     setSellinglist: (state, action) => {
@@ -144,7 +144,7 @@ export const Products = createSlice({
         state.loading = true;
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
         state.loading = false;
       })
       .addCase(updateProduct.rejected, (state, action) => {
@@ -156,8 +156,7 @@ export const Products = createSlice({
       })
       .addCase(findProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentProduct = action.payload.product;
-        state.currentStars = action.payload.stars;
+        state.currentProduct = action.payload;
       })
       .addCase(findProduct.rejected, (state, action) => {
         state.loading = false;
