@@ -1,7 +1,6 @@
-import { Dimensions, FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ImageViewer } from './ImageViewer';
 import Animated from 'react-native-reanimated';
-import { Pagination } from '../pagination';
 import { FloatingBtns } from './FloatingBtns';
 import { ProductInfo } from './ProductInfo';
 import { useProductFetch } from '../../hooks/useProductFetch';
@@ -11,17 +10,19 @@ import { Review } from './Reviews';
 import { UsersReviews } from './UsersReviews';
 import { EmptyReviewList } from './EmptyReviewList';
 import { HeartBasket } from './heart_basket';
+import { DetailImg } from './DetailImg';
 
 export const ProductDetail = () => {
   const {
-    currentPage,
     currentStars,
     currentProduct,
     handleHeart,
     handleHorizontalScroll,
-    heart,
+    isLiked,
     isUsers,
     user,
+    profile,
+    likedCount,
     borderWidths,
     handlePress,
     activeMenu,
@@ -33,35 +34,29 @@ export const ProductDetail = () => {
     handlePostReview,
   } = useProductFetch();
 
+  console.log('isUsers', isUsers);
+  console.log('userReviewed', userReviewed);
   if (currentProduct !== undefined && currentProduct !== null) {
     return (
       <>
         <Animated.ScrollView style={styles.wrapper} scrollEventThrottle={16} showsVerticalScrollIndicator={false}>
           <ImageViewer item={currentProduct} style={styles.image} onScroll={handleHorizontalScroll} />
-          <Pagination contents={currentProduct.images} current={currentPage} />
-          <ProductInfo
-            currentProduct={currentProduct}
-            currentStars={currentStars}
-            heart={heart}
-            onPress={handleHeart}
-            onPressBasket={handleAddToBasket}
-          />
-          <FlatList
-            horizontal={true}
-            data={currentProduct.detailImgs}
-            keyExtractor={(item, index) => item + index}
-            renderItem={({ item }) => <Image source={{ uri: item }} style={styles.detail_imgs} resizeMode="contain" />}
-          />
-
+          <ProductInfo currentProduct={currentProduct} currentStars={currentStars} reviews={reviews} />
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.detailImgsView}>
+            {currentProduct.description_file &&
+              currentProduct.description_file.length > 0 &&
+              currentProduct.description_file.map((file, idx) => <DetailImg key={idx} idx={idx} file={file} />)}
+          </ScrollView>
           <HeartBasket
             currentProduct={currentProduct}
-            heart={heart}
+            isLiked={isLiked}
             onPress={handleHeart}
             onPressBasket={handleAddToBasket}
           />
           <TouchMenu
             currentProduct={currentProduct}
             borderWidths={borderWidths}
+            reviews={reviews}
             onPress={handlePress}
             activeMenu={activeMenu}
           />
@@ -76,15 +71,19 @@ export const ProductDetail = () => {
                 {/* 게스트 또는 로그인한 사용자가 판매 등록한 상품이 아니고, 이전에 리뷰를 등록한 적이 없는 경우 렌더링*/}
                 {!isUsers && !userReviewed ? (
                   <CreateReview
-                    user={user}
+                    profile={profile}
                     handlePostReview={handlePostReview}
                     navigation={navigation}
                     selectedProductId={selectedProductId}
                   />
+                ) : isUsers ? (
+                  <Review review={userReviewed} profile={profile} />
+                ) : null}
+                {reviews.length > 0 ? (
+                  <UsersReviews reviews={reviews} profile={profile} reviewList={true} />
                 ) : (
-                  <Review userReviewed={userReviewed} reviewList={false} />
+                  <EmptyReviewList />
                 )}
-                {reviews.length > 0 ? <UsersReviews reviews={reviews} reviewList={true} /> : <EmptyReviewList />}
               </View>
             )}
             {activeMenu === 2 && (
@@ -94,7 +93,7 @@ export const ProductDetail = () => {
             )}
           </View>
         </Animated.ScrollView>
-        <FloatingBtns currentProduct={currentProduct} heart={heart} onPress={handleHeart} />
+        <FloatingBtns currentProduct={currentProduct} isLiked={isLiked} likedCount={likedCount} onPress={handleHeart} />
       </>
     );
   }
@@ -103,5 +102,5 @@ export const ProductDetail = () => {
 const styles = StyleSheet.create({
   wrapper: { position: 'relative', paddingRight: 10, paddingVertical: 15 },
   image: { width: Dimensions.get('window').width, height: 300 },
-  detail_imgs: { width: 350, height: 340 },
+  detailImgsView: { marginBottom: 20 },
 });

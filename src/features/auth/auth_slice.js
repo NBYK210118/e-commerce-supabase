@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getUserLocation, logout, signIn, signUp, updateProfile, verifyToken } from './auth_thunk';
+import { getUserLocation, logout, signIn, signUp, updateProfile } from './auth_thunk';
 
 export const UserAuth = createSlice({
   name: 'userAuth',

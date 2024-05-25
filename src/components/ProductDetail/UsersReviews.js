@@ -1,16 +1,19 @@
+import { supabase } from '../../supabase';
 import { Review } from './Reviews';
 
-export const UsersReviews = ({ reviews = [], reviewList }) => {
+export const UsersReviews = ({ reviews = [], reviewList, profile }) => {
   if (reviewList && reviews.length > 0) {
+    const path = profile.imgFile.path;
+    const { data } = supabase.storage.from('Products').getPublicUrl(path);
     return (
       <>
         {reviews.map((review, idx) => (
           <Review
             key={idx}
             stars={review.stars}
-            nickname={review.user.profile.nickname}
-            txt={review.txt}
-            profileImg={review.user.profile.imageUrl}
+            nickname={profile.nickname}
+            txt={review.content}
+            profileImg={data.publicUrl}
           />
         ))}
       </>

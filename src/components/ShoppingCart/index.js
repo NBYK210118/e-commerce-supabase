@@ -1,24 +1,26 @@
 import React from 'react';
 import Animated from 'react-native-reanimated';
 import { View, StyleSheet } from 'react-native';
-import { BasketProduct } from './BasketProduct';
 import { HeadRow } from './HeadRow';
 import { InventoryModal } from './inventory_modal';
-import { PayInfo } from './PayInfo';
 import { PayInfoSkeleton } from './PayInfoSkeleton';
-import { AnimatedBottomButton } from './AnimatedBottomPayBtn';
 import { useBasketHooks } from '../../hooks/useBasketHooks';
+import PayInfo from './PayInfo';
+import AnimatedBottomButton from './AnimatedBottomPayBtn';
+import { BasketProduct } from './BasketProduct';
 
 export const ShoppingCart = () => {
   const {
     loading,
     animatedStyle,
+    inventoryStatus,
     checkEntire,
     handleInventories,
     handleModal,
     handleScroll,
     modalStyle,
     productSummary,
+    currentProductId,
     removeManyProducts,
     submitInventoryChanges,
     toggleCheckBox,
@@ -30,7 +32,9 @@ export const ShoppingCart = () => {
     selectedProducts,
     setModalOpen,
     setQuantity,
+    reloadData,
   } = useBasketHooks();
+
   return (
     <Animated.ScrollView style={styles.container} onScroll={handleScroll} scrollEventThrottle={16}>
       <View style={{ paddingBottom: 50 }}>
@@ -47,6 +51,7 @@ export const ShoppingCart = () => {
           value={entireCheck}
           onValueChange={checkEntire}
           onPress={checkEntire}
+          reload={reloadData}
           removeMany={removeManyProducts}
         />
         {products.length > 0 &&
@@ -56,6 +61,8 @@ export const ShoppingCart = () => {
                 item={item}
                 key={index}
                 idx={index}
+                currentProductId={currentProductId}
+                inventory_status={inventoryStatus}
                 status={selectedProducts}
                 onCheck={toggleCheckBox}
                 onClose={toggleClose}
@@ -76,6 +83,7 @@ export const ShoppingCart = () => {
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
     flex: 1,
     padding: 10,
     paddingBottom: 20,

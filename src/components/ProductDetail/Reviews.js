@@ -1,29 +1,51 @@
 import { AntDesign } from '@expo/vector-icons';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { primary_gray } from '../../styles/common/colors';
+import { primary_blue, primary_gray } from '../../styles/common/colors';
+import { supabase } from '../../supabase';
+import { useEffect, useState } from 'react';
 
-export const Review = ({ userReviewed, nickname, stars, txt, profileImg, reviewList }) => {
-  if (!reviewList && userReviewed) {
+export const Review = ({ review, stars, txt, profile, reviewList = false, profileImg, nickname }) => {
+  const [img, setImg] = useState(null);
+
+  const fetchProfileImg = async () => {
+    const filePath = profile?.profileImg.split('"')[3];
+    const { data, error } = await supabase.storage.from('UserProfile').download(filePath);
+    if (error) {
+      console.log('error: ', error);
+      return;
+    }
+    if (data) {
+      const image = URL.createObjectURL(data);
+      setImg(image);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImg();
+  }, []);
+
+  if (!reviewList) {
     const wrapperStyle = {
       ...styles.wrapper,
       backgroundColor: '#e0efff',
     };
+
     return (
       <View style={wrapperStyle}>
         <View>
-          <Image source={{ uri: userReviewed?.user?.profile?.imageUrl }} style={styles.image} />
+          <Image source={{ uri: img ? img : 'https://via.placeholder.com/100' }} style={styles.image} />
         </View>
         <View style={styles.box}>
           <View style={styles.name_stars}>
-            <Text style={styles.nickname}>{userReviewed?.user?.profile?.nickname}</Text>
+            <Text style={styles.nickname}>{profile?.nickname}</Text>
             <View style={styles.stars_arrange}>
-              {[...Array(userReviewed?.stars)].map((_, idx) => (
+              {[...Array(review?.stars)].map((_, idx) => (
                 <AntDesign key={idx} name="star" size={15} color="#f4cf0f" />
               ))}
             </View>
           </View>
           <Text numberOfLines={2} style={styles.review_txt}>
-            {userReviewed?.txt}
+            판매자는 자신의 상품에 댓글을 남길 수 없습니다
           </Text>
         </View>
       </View>
@@ -43,7 +65,7 @@ export const Review = ({ userReviewed, nickname, stars, txt, profileImg, reviewL
               ))}
             </View>
           </View>
-          <Text numberOfLines={2} style={styles.review_txt}>
+          <Text numberOfLines={1} style={styles.review_txt}>
             {txt ? txt : '리뷰 텍스트'}
           </Text>
         </View>
@@ -68,5 +90,5 @@ const styles = StyleSheet.create({
   name_stars: { flexDirection: 'row' },
   nickname: { marginBottom: 5, marginRight: 5, fontWeight: 'bold' },
   stars_arrange: { flexDirection: 'row', marginHorizontal: 5 },
-  review_txt: { fontSize: 14, marginTop: 10 },
+  review_txt: { fontSize: 13, marginTop: 10, color: primary_blue, fontWeight: 'bold' },
 });

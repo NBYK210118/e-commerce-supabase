@@ -1,4 +1,3 @@
-import { View } from 'react-native';
 import { primary_gray } from '../../styles/common/colors';
 import Animated from 'react-native-reanimated';
 

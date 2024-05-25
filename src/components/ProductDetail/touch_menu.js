@@ -2,8 +2,8 @@ import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { primary_gray } from '../../styles/common/colors';
 
-export const TouchMenu = ({ currentProduct, onPress, activeMenu, borderWidths }) => {
-  if (currentProduct) {
+export const TouchMenu = ({ currentProduct, onPress, activeMenu, borderWidths, reviews }) => {
+  if (currentProduct && reviews !== undefined) {
     const animatedStyle = (idx) => {
       return useAnimatedStyle(() => ({
         borderBottomWidth: activeMenu === idx && borderWidths[activeMenu].value,
@@ -19,7 +19,7 @@ export const TouchMenu = ({ currentProduct, onPress, activeMenu, borderWidths })
         </Animated.View>
         <Animated.View key={1} style={[styles.item, animatedStyle(1)]}>
           <TouchableOpacity onPress={() => onPress(1)}>
-            <Text style={styles.item_txt}>후기({currentProduct.reviews.length})</Text>
+            <Text style={styles.item_txt}>후기({reviews.length})</Text>
           </TouchableOpacity>
         </Animated.View>
         <Animated.View key={2} style={[styles.item, animatedStyle(2)]}>

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 import {
   addProduct,
   deleteSellingProducts,
@@ -7,17 +7,19 @@ import {
   findProductByKeyword,
   getCategory,
   getDiscountingProducts,
+  getLikes,
   getMostViewedProducts,
+  getProductListByCategory,
   getRecommendProduct,
-  getSellinglist,
   getWatchedProducts,
+  takeSellinglist,
   updateProduct,
-  updateProductLike,
+  updateProductLikeStatus,
   updateProductStatus,
-} from "./product_thunk";
+} from './product_thunk';
 
 export const Products = createSlice({
-  name: "products",
+  name: 'products',
   initialState: {
     currentProduct: null,
     currentStars: 5,
@@ -25,11 +27,13 @@ export const Products = createSlice({
     mostViewed: [],
     discounting: [],
     recommended: [],
+    products: [],
+    likes: [],
     watchedProducts: [],
     sellinglist: [],
     loading: false,
     selectedProductId: null,
-    error: "",
+    error: '',
   },
   reducers: {
     setSellinglist: (state, action) => {
@@ -51,6 +55,28 @@ export const Products = createSlice({
       .addCase(getCategory.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
+      })
+      .addCase(getLikes.pending, (state) => {
+        state.loading = false;
+      })
+      .addCase(getLikes.fulfilled, (state, action) => {
+        state.loading = true;
+        state.likes = action.payload;
+      })
+      .addCase(getLikes.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateProductLikeStatus.pending, (state) => {
+        state.loading = false;
+      })
+      .addCase(updateProductLikeStatus.fulfilled, (state, action) => {
+        state.loading = true;
+        state.likes = action.payload;
+      })
+      .addCase(updateProductLikeStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       .addCase(getMostViewedProducts.pending, (state) => {
         state.loading = true;
@@ -96,14 +122,14 @@ export const Products = createSlice({
         state.error = action.payload;
         state.loading = false;
       })
-      .addCase(getSellinglist.pending, (state) => {
+      .addCase(takeSellinglist.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getSellinglist.fulfilled, (state, action) => {
+      .addCase(takeSellinglist.fulfilled, (state, action) => {
         state.sellinglist = action.payload;
         state.loading = false;
       })
-      .addCase(getSellinglist.rejected, (state, action) => {
+      .addCase(takeSellinglist.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -111,7 +137,7 @@ export const Products = createSlice({
         state.loading = true;
       })
       .addCase(updateProductStatus.fulfilled, (state, action) => {
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
         state.loading = false;
       })
       .addCase(updateProductStatus.rejected, (state, action) => {
@@ -123,7 +149,7 @@ export const Products = createSlice({
       })
       .addCase(deleteSellingProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
       })
       .addCase(deleteSellingProducts.rejected, (state, action) => {
         state.loading = false;
@@ -133,7 +159,7 @@ export const Products = createSlice({
         state.loading = true;
       })
       .addCase(addProduct.fulfilled, (state, action) => {
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
         state.loading = false;
       })
       .addCase(addProduct.rejected, (state, action) => {
@@ -166,7 +192,7 @@ export const Products = createSlice({
         state.loading = true;
       })
       .addCase(findProductByKeyword.fulfilled, (state, action) => {
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
         state.loading = false;
       })
       .addCase(findProductByKeyword.rejected, (state, action) => {
@@ -177,23 +203,23 @@ export const Products = createSlice({
         state.loading = true;
       })
       .addCase(findProductByCategory.fulfilled, (state, action) => {
-        state.sellingList = action.payload;
+        state.sellinglist = action.payload;
         state.loading = false;
       })
       .addCase(findProductByCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(updateProductLike.pending, (state) => {
+      .addCase(getProductListByCategory.pending, (state) => {
         state.loading = true;
       })
-      .addCase(updateProductLike.fulfilled, (state, action) => {
+      .addCase(getProductListByCategory.fulfilled, (state, action) => {
+        state.products = action.payload;
         state.loading = false;
-        state.currentProduct = action.payload;
       })
-      .addCase(updateProductLike.rejected, (state, action) => {
-        state.loading = false;
+      .addCase(getProductListByCategory.rejected, (state, action) => {
         state.error = action.payload;
+        state.loading = false;
       });
   },
 });

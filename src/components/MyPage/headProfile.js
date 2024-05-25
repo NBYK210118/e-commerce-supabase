@@ -26,7 +26,7 @@ export const HeadProfile = ({ onPress }) => {
 
   useEffect(() => {
     fetchProfileImg();
-  }, [navigation]);
+  }, []);
 
   return (
     <View style={hp_style.container}>

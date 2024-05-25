@@ -2,40 +2,47 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import ProductApi from '../services/product_api';
 import { useCallback, useEffect, useState } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { getLikes, updateProductLike } from '../features/products/product_thunk';
 
 export const useLikeStates = () => {
   const [visibleOption, setVisibleOption] = useState(false);
-  const [dataSet, setDataSet] = useState(null || []);
   const [activeMenu, setActiveMenu] = useState(0);
   const [selectedMenu, setSelectedMenu] = useState('');
   const [likesStatus, setLikesStatus] = useState({});
   const navigation = useNavigation();
-  const { user, token } = useSelector((state) => state.userAuth);
-  const { categories, loading } = useSelector((state) => state.products);
+  const dispatch = useDispatch();
+  const { user, token, profile } = useSelector((state) => state.userAuth);
+  const { likes, categories, loading } = useSelector((state) => state.products);
   const borderWidths = [...Array(categories.length)].map(() => useSharedValue(0));
 
   useFocusEffect(
     useCallback(() => {
+      if (!token) {
+        navigation.navigate('Login');
+      }
+    }, [token, navigation])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
       if (token && !visibleOption) {
-        ProductApi.getUserLikes(token).then((response) => {
-          setDataSet(response.data);
-        });
+        dispatch(getLikes({ user_id: profile.user_id }));
       } else {
       }
     }, [navigation, visibleOption])
   );
 
   useEffect(() => {
-    if (dataSet.length > 0) {
+    if (likes.length > 0) {
       setLikesStatus(
-        dataSet.reduce((acc, val) => {
-          acc[val.id] = val.likedBy.some((like) => like.userId === user.id);
+        likes.reduce((acc, val) => {
+          acc[val.product_id] = true;
           return acc;
         }, {})
       );
     }
-  }, [dataSet]);
+  }, [likes]);
 
   useEffect(() => {
     if (token && selectedMenu !== undefined && selectedMenu !== '') {
@@ -46,27 +53,17 @@ export const useLikeStates = () => {
     }
   }, [selectedMenu]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!token) {
-        navigation.navigate('Login');
-      }
-    }, [token, navigation])
-  );
-
-  const toggleLike = (product) => {
+  const toggleLike = (product_id) => {
     const condition = Object.keys(likesStatus).length > 0;
     const data = {
       ...likesStatus,
-      [product.id]: !likesStatus[product.id],
+      [product_id]: !likesStatus[product_id],
     };
 
     setLikesStatus(data);
 
     if (token && condition) {
-      ProductApi.updatelikeProduct(token, data).then((response) => {
-        setDataSet(response.data.products);
-      });
+      dispatch(updateProductLike({ user_id: profile.user_id, data }));
     }
   };
 
@@ -82,7 +79,7 @@ export const useLikeStates = () => {
     setSelectedMenu,
     categories,
     borderWidths,
-    dataSet,
+    likes,
     likesStatus,
     toggleLike,
     visibleOption,

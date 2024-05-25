@@ -16,7 +16,10 @@ export const useCategoryHooks = () => {
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
-    dispatch(getCategory({ navigate: navigation }));
+    console.log('category_datas: ', category_datas);
+    if (category_datas === undefined || category_datas === null || category_datas.length === 0) {
+      dispatch(getCategory({ navigate: navigation }));
+    }
   }, []);
 
   useEffect(() => {

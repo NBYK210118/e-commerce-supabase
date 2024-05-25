@@ -1,20 +1,25 @@
 import { AntDesign } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { supabase } from '../../supabase';
 
 export const ProductItem = ({ item, addToBasket, handleButton }) => {
-  return (
-    <Pressable style={styles.container} onPress={() => handleButton(item.id)}>
-      <Image source={{ uri: item?.images[0]?.imgUrl }} style={styles.img} />
-      <Text style={styles.name}>{item?.name}</Text>
-      <View style={styles.price}>
-        {item?.isDiscounting && <Text style={styles.ratio}>{item?.discountRatio}%</Text>}
-        <Text style={styles.origin_price}>{item?.price.toLocaleString('ko-kr')}원</Text>
-      </View>
-      <Pressable style={styles.btn} onPress={() => addToBasket(item.id)}>
-        <AntDesign name="shoppingcart" size={18} color={'white'} style={{ textAlign: 'center' }} />
+  if (item !== undefined) {
+    const path = JSON.parse(item.imgFile).path;
+    const { data } = supabase.storage.from('Products').getPublicUrl(path);
+    return (
+      <Pressable style={styles.container} onPress={() => handleButton(item.id)}>
+        <Image source={{ uri: data.publicUrl }} style={styles.img} />
+        <Text style={styles.name}>{item?.name}</Text>
+        <View style={styles.price}>
+          {item?.isdiscounting && <Text style={styles.ratio}>{item?.discountratio}%</Text>}
+          <Text style={styles.origin_price}>{item?.price.toLocaleString('ko-kr')}원</Text>
+        </View>
+        <Pressable style={styles.btn} onPress={() => addToBasket(item.id)}>
+          <AntDesign name="shoppingcart" size={18} color={'white'} style={{ textAlign: 'center' }} />
+        </Pressable>
       </Pressable>
-    </Pressable>
-  );
+    );
+  }
 };
 
 const styles = StyleSheet.create({

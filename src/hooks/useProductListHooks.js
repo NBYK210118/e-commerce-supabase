@@ -6,13 +6,14 @@ import { Dimensions } from 'react-native';
 import { BackButton, HomeButton } from '../components/icons/icons';
 import { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { setSelectedProduct } from '../features/products/product_slice';
+import { getProductListByCategory } from '../features/products/product_thunk';
+import { addProductInMyBasket } from '../services/supabase_functions';
 
 export const useProductListHooks = ({ route }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [products, setProducts] = useState([]);
   const { token, user } = useSelector((state) => state.userAuth);
-  const { categories } = useSelector((state) => state.products);
+  const { categories, products } = useSelector((state) => state.products);
   const [numColumns, setNumColumns] = useState(2);
   const [loading, setLoading] = useState(false);
   const [categoryStatus, setCategoryStatus] = useState({});
@@ -43,9 +44,7 @@ export const useProductListHooks = ({ route }) => {
     useCallback(() => {
       const { categoryName } = route.params;
       if (categoryName) {
-        ProductApi.getAllCategoryProducts(categoryName).then((response) => {
-          setProducts(response.data);
-        });
+        dispatch(getProductListByCategory({ category: categoryName }));
 
         const updateLayout = () => {
           const width = Dimensions.get('window').width;
@@ -76,13 +75,9 @@ export const useProductListHooks = ({ route }) => {
     navigation.navigate('Product');
   };
 
-  const handleAddToBasket = (productId) => {
+  const handleAddToBasket = async (productId) => {
     setLoading(true);
-    ProductApi.addProductMyBasket(token, productId, navigation).then((response) => {
-      if (response.data) {
-        alert('장바구니에 성공적으로 추가되었습니다');
-      }
-    });
+    await addProductInMyBasket({ user_id: user.id, product_id: productId });
     setLoading(false);
   };
 
@@ -99,7 +94,7 @@ export const useProductListHooks = ({ route }) => {
       });
       ProductApi.getAllCategoryProducts(category).then((response) => {
         try {
-          setProducts(response.data);
+          // setProducts(response.data);
         } catch (error) {
           if (error.response !== undefined) {
             switch (error.response) {

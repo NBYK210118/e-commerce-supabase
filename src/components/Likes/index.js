@@ -11,7 +11,7 @@ export const Likes = () => {
     setActiveMenu,
     borderWidths,
     categories,
-    dataSet,
+    likes,
     likesStatus,
     setSelectedMenu,
     toggleLike,
@@ -33,7 +33,7 @@ export const Likes = () => {
       <View style={styles.header}>
         <View style={styles.length_wrap}>
           <Text>
-            총 <Text style={styles.length}>{dataSet.length}</Text>개의 상품을 좋아합니다
+            총 <Text style={styles.length}>{likes.length}</Text>개의 상품을 좋아합니다
           </Text>
         </View>
         {visibleOption && (
@@ -46,7 +46,7 @@ export const Likes = () => {
       </View>
 
       <FlatList
-        data={dataSet}
+        data={likes}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <LikesItem product={item} toggleLike={toggleLike} likesStatus={likesStatus} />}
         style={styles.scrollView}

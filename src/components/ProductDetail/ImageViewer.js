@@ -1,7 +1,10 @@
 import { Image, ScrollView } from 'react-native';
+import { supabase } from '../../supabase';
 
 export const ImageViewer = ({ item, style, resizeMode, onScroll }) => {
   if (item) {
+    const path = JSON.parse(item.imgFile).path;
+    const { data } = supabase.storage.from('Products').getPublicUrl(path);
     return (
       <ScrollView
         horizontal={true}
@@ -11,7 +14,7 @@ export const ImageViewer = ({ item, style, resizeMode, onScroll }) => {
         onScroll={onScroll}
         pagingEnabled
       >
-        <Image key={item.id} source={{ uri: item.images?.[0]?.imgUrl }} style={style} resizeMode={resizeMode} />
+        <Image key={item.id} source={{ uri: data.publicUrl }} style={style} resizeMode={resizeMode} />
       </ScrollView>
     );
   }

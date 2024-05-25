@@ -1,69 +1,66 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import ProductApi from "../../services/product_api";
-import { supabase } from "../../supabase";
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import ProductApi from '../../services/product_api';
+import { supabase } from '../../supabase';
 import {
+  addProductToSellingList,
+  findProductCategory,
+  findProductKeyword,
+  getMyLikes,
   getSellinglist,
   productImagesUpsert,
-} from "../../services/supabase_functions";
+  productListByCategory,
+  toggleLiked,
+} from '../../services/supabase_functions';
+import uuid from 'react-native-uuid';
 
-export const addProduct = createAsyncThunk(
-  "products/addProduct",
-  async ({ data, created_id }, { rejectWithValue }) => {
+export const findProduct = createAsyncThunk('products/findProduct', async ({ product_id }, { rejectWithValue }) => {
+  try {
+    const { data: productInfo, error: productErr } = await supabase
+      .from('product')
+      .select('*')
+      .eq('id', product_id)
+      .single();
+
+    if (productErr) {
+      console.log('상품 정보 불러오던 중 에러 발생: ', productErr);
+      return;
+    }
+
+    if (productInfo) {
+      console.log('성공적으로 상품 정보를 불러왔습니다!', productInfo);
+      return productInfo;
+    }
+  } catch (error) {
+    if (error.response) {
+      return rejectWithValue({
+        message: error.response.data.message || 'Unknown error occured',
+        status: error.response.status,
+      });
+    } else {
+      return rejectWithValue({
+        message: error.message || 'Network error',
+        status: 500,
+      });
+    }
+  }
+});
+
+export const takeSellinglist = createAsyncThunk(
+  '/products/getSellingList',
+  async ({ profile }, { rejectWithValue }) => {
     try {
-      const { result, uploadProductImg } = productImagesUpsert(
-        data,
-        created_id
-      );
-      const { data: createProduct, error: createProductError } = await supabase
-        .from("product")
-        .insert([
-          {
-            id: created_id,
-            seller_id: data.seller,
-            name: data.name,
-            category: data.category,
-            price: data.price,
-            manufacturer: data.manufacturer,
-            description: data.detail,
-            description_file: result,
-            inventory: data.inventory,
-            isdiscounting: data.isDiscounting,
-            discountprice: data.discountPrice,
-            discountratio: data.discountRatio,
-            status: data.status,
-            imgFile: uploadProductImg,
-          },
-        ])
-        .select();
-      if (createProductError) {
-        console.log("Failed to create Product!", createProductError);
-        return rejectWithValue(createProductError.message);
-      }
-      if (createProduct) {
-        console.log("Success to create Product!", createProduct);
-        const { data: addTolist, error: failedToAdd } = await supabase
-          .from("mysellinglist")
-          .upsert([{ seller_id: data.seller, product_id: created_id }])
-          .select();
-        if (failedToAdd) {
-          console.log("Failed to insert the mysellinglist row", failedToAdd);
-          return rejectWithValue(failedToAdd.message);
-        }
-        if (addTolist) {
-          console.log("You have been successfully added to our sales list!");
-          const result = getSellinglist(data.seller_id);
-          return result;
-        }
-      }
+      console.log('판매 리스트 불러오는 중...');
+      const data = await getSellinglist(profile.user_id);
+      return data;
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -71,15 +68,65 @@ export const addProduct = createAsyncThunk(
   }
 );
 
-export const updateProduct = createAsyncThunk(
-  "products/updateProduct",
-  async ({ updateInfo, id, seller_id }, { rejectWithValue }) => {
-    try {
-      const { result, uploadProductImg } = productImagesUpsert(updateInfo);
-      const { data: createProduct, error: createProductError } = await supabase
-        .from("product")
-        .update({
+export const addProduct = createAsyncThunk('products/addProduct', async ({ data }, { rejectWithValue }) => {
+  try {
+    const id = uuid.v4();
+    const { result, uploadProductImg } = await productImagesUpsert({ data, created_id: id });
+    const { data: createProduct, error: createProductError } = await supabase
+      .from('product')
+      .insert([
+        {
           id,
+          seller_id: data.seller,
+          name: data.name,
+          category: data.category,
+          price: data.price,
+          manufacturer: data.manufacturer,
+          description: data.detail,
+          description_file: result,
+          inventory: data.inventory,
+          isdiscounting: data.isDiscounting,
+          discountprice: data.discountPrice,
+          discountratio: data.discountRatio,
+          status: data.status,
+          imgFile: uploadProductImg,
+        },
+      ])
+      .select();
+    if (createProductError) {
+      console.log('Failed to create Product!', createProductError);
+      return rejectWithValue(createProductError.message);
+    }
+    if (createProduct) {
+      console.log('Success to create Product!', createProduct);
+      const response = await addProductToSellingList({ seller_id: data.seller, product_id: id, take: true });
+      return response;
+    }
+  } catch (error) {
+    if (error.response) {
+      return rejectWithValue({
+        message: error.response.data.message || 'Unknown error occurred',
+        status: error.response.status,
+      });
+    } else {
+      return rejectWithValue({
+        message: error.message || 'Network error',
+        status: 500,
+      });
+    }
+  }
+});
+
+export const updateProduct = createAsyncThunk(
+  'products/updateProduct',
+  async ({ updateInfo, product_id }, { rejectWithValue }) => {
+    try {
+      console.log('updateProduct 동작 시작');
+      const { result, uploadProductImg } = await productImagesUpsert({ data: updateInfo });
+      const { data: createProduct, error: createProductError } = await supabase
+        .from('product')
+        .update({
+          id: product_id,
           seller_id,
           name: updateInfo.name,
           category: updateInfo.category,
@@ -88,42 +135,32 @@ export const updateProduct = createAsyncThunk(
           description: updateInfo.detail,
           description_file: result,
           inventory: updateInfo.inventory,
-          isdiscounting: updateInfo.isDiscounting,
+          isdiscounting: updateInfo.isdiscounting,
           discountprice: updateInfo.discountPrice,
           discountratio: updateInfo.discountRatio,
           status: updateInfo.status,
           imgFile: uploadProductImg,
         })
+        .eq('seller_id', updateInfo.seller)
         .select();
       if (createProductError) {
-        console.log("Failed to create Product!", createProductError);
+        console.log('Failed to create Product!', createProductError);
         return rejectWithValue(createProductError.message);
       }
       if (createProduct) {
-        console.log("Success to create Product!", createProduct);
-        const { data: addTolist, error: failedToAdd } = await supabase
-          .from("mysellinglist")
-          .insert([{ seller_id, product_id: created_id }])
-          .select();
-        if (failedToAdd) {
-          console.log("Failed to insert the mysellinglist row", failedToAdd);
-          return rejectWithValue(failedToAdd.message);
-        }
-        if (addTolist) {
-          console.log("You have been successfully added to our sales list!");
-          const result = getSellinglist(seller_id);
-          return result;
-        }
+        console.log('Success to create Product!', createProduct);
+        const result = await getSellinglist(seller_id);
+        return result;
       }
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -132,40 +169,36 @@ export const updateProduct = createAsyncThunk(
 );
 
 export const deleteSellingProducts = createAsyncThunk(
-  "products/deleteProductStatus",
+  'products/deleteProductStatus',
   async ({ data, profile }, { rejectWithValue }) => {
     try {
       const ids = [];
       Object.keys(data).forEach((key) => {
         if (data[key]) ids.push(key);
       });
-      console.log("ids: ", ids);
-      const {
-        data: deleteResult,
-        status,
-        error: productDeleteError,
-      } = await supabase
-        .from("mysellinglist")
+      const { data: deleteResult, error: productDeleteError } = await supabase
+        .from('mysellinglist')
         .delete()
-        .in("product_id", ids)
+        .in('product_id', ids)
         .select();
       if (productDeleteError) {
-        console.log("판매 취소 요청 실패", productDeleteError);
+        console.log('판매 취소 요청 실패', productDeleteError);
+        return rejectWithValue(productDeleteError.message);
       }
       if (deleteResult) {
-        console.log("판매 취소 요청 성공", deleteResult);
-        const result = getSellinglist(profile.user_id);
+        console.log('판매 취소 요청 성공', deleteResult);
+        const result = await getSellinglist(profile.user_id);
         return result;
       }
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -173,21 +206,67 @@ export const deleteSellingProducts = createAsyncThunk(
   }
 );
 
-export const takeSellinglist = createAsyncThunk(
-  "/products/getSellingList",
-  async ({ profile }, { rejectWithValue }) => {
+// mysellinglist 테이블 내부에서 검색
+export const findProductByKeyword = createAsyncThunk(
+  'products/findProductByKeyWord',
+  async ({ data, user_id }, { rejectWithValue }) => {
     try {
-      const data = getSellinglist(profile.user_id);
+      const selling_list = await findProductKeyword({ keyword: data, user_id });
+      return selling_list;
+    } catch (error) {
+      if (error.response) {
+        return rejectWithValue({
+          message: error.response.data.message || 'Unknown error occurred',
+          status: error.response.status,
+        });
+      } else {
+        return rejectWithValue({
+          message: error.message || 'Network error',
+          status: 500,
+        });
+      }
+    }
+  }
+);
+
+// myellinglist 에서 카테고리에 해당하는 상품들 검색
+export const findProductByCategory = createAsyncThunk(
+  'products/findProductByCategory',
+  async ({ category, user_id }, { rejectWithValue }) => {
+    try {
+      const selling_list = await findProductCategory({ user_id, category });
+      return selling_list;
+    } catch (error) {
+      if (error.response) {
+        return rejectWithValue({
+          message: error.response.data.message || 'Unknown error occurred',
+          status: error.response.status,
+        });
+      } else {
+        return rejectWithValue({
+          message: error.message || 'Network error',
+          status: 500,
+        });
+      }
+    }
+  }
+);
+
+export const getProductListByCategory = createAsyncThunk(
+  'products/getProductListByCategory',
+  async ({ category }, { rejectWithValue }) => {
+    try {
+      const data = await productListByCategory({ category });
       return data;
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -195,27 +274,61 @@ export const takeSellinglist = createAsyncThunk(
   }
 );
 
-export const getCategory = createAsyncThunk(
-  "/products/getCategory",
-  async ({ navigate }, { rejectWithValue }) => {
+export const getCategory = createAsyncThunk('/products/getCategory', async ({ navigate }, { rejectWithValue }) => {
+  try {
+    let { data, error } = await supabase.from('category').select('*');
+    if (error) {
+      console.log('Failed to load categories', error);
+      return;
+    }
+    if (data) {
+      return data;
+    }
+  } catch (error) {
+    if (error.response) {
+      return rejectWithValue({
+        message: error.response.data.message || 'Unknown error occurred',
+        status: error.response.status,
+      });
+    } else {
+      return rejectWithValue({
+        message: error.message || 'Network error',
+        status: 500,
+      });
+    }
+  }
+});
+
+export const updateProductStatus = createAsyncThunk(
+  'products/updateProductStatus',
+  async ({ data, user_id }, { rejectWithValue }) => {
     try {
-      let { data, error } = await supabase.from("category").select("*");
-      if (error) {
-        console.log("Failed to load categories", error);
-        return;
-      }
-      if (data) {
-        return data;
-      }
+      const updateProductStatus = Object.keys(data).map(async (productId) => {
+        try {
+          await supabase
+            .from('product')
+            .update({
+              status: data[productId] ? '보류중' : '판매중',
+            })
+            .eq('id', productId)
+            .select();
+        } catch (error) {
+          console.log('상품 상태 업데이트 실패: ', error);
+          return;
+        }
+      });
+      await Promise.all(updateProductStatus);
+      const result = await getSellinglist(user_id);
+      return result;
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -223,8 +336,10 @@ export const getCategory = createAsyncThunk(
   }
 );
 
+// ========================== 아직 미구현 ===========================
+
 export const getMostViewedProducts = createAsyncThunk(
-  "/products/getMostViewedProducts",
+  '/products/getMostViewedProducts',
   async ({ navigation }, { rejectWithValue }) => {
     try {
       const response = await ProductApi.getMostInterested(navigation);
@@ -234,12 +349,12 @@ export const getMostViewedProducts = createAsyncThunk(
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -248,7 +363,7 @@ export const getMostViewedProducts = createAsyncThunk(
 );
 
 export const getDiscountingProducts = createAsyncThunk(
-  "products/getDiscountingProducts",
+  'products/getDiscountingProducts',
   async ({ navigation }, { rejectWithValue }) => {
     try {
       const response = await ProductApi.getDiscountingProducts(navigation);
@@ -256,12 +371,12 @@ export const getDiscountingProducts = createAsyncThunk(
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -269,32 +384,29 @@ export const getDiscountingProducts = createAsyncThunk(
   }
 );
 
-export const getRecommendProduct = createAsyncThunk(
-  "products/getRecommendProducts",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await ProductApi.getRecommendProduct();
-      if (response.data) {
-        return response.data;
-      }
-    } catch (error) {
-      if (error.response) {
-        return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
-          status: error.response.status,
-        });
-      } else {
-        return rejectWithValue({
-          message: error.message || "Network error",
-          status: 500,
-        });
-      }
+export const getRecommendProduct = createAsyncThunk('products/getRecommendProducts', async (_, { rejectWithValue }) => {
+  try {
+    const response = await ProductApi.getRecommendProduct();
+    if (response.data) {
+      return response.data;
+    }
+  } catch (error) {
+    if (error.response) {
+      return rejectWithValue({
+        message: error.response.data.message || 'Unknown error occurred',
+        status: error.response.status,
+      });
+    } else {
+      return rejectWithValue({
+        message: error.message || 'Network error',
+        status: 500,
+      });
     }
   }
-);
+});
 
 export const getWatchedProducts = createAsyncThunk(
-  "products/getWatchedProducts",
+  'products/getWatchedProducts',
   async ({ token, navigation }, { rejectWithValue }) => {
     try {
       const response = await ProductApi.userRecentWatched(token, navigation);
@@ -304,12 +416,12 @@ export const getWatchedProducts = createAsyncThunk(
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -317,23 +429,60 @@ export const getWatchedProducts = createAsyncThunk(
   }
 );
 
-export const updateProductStatus = createAsyncThunk(
-  "products/updateProductStatus",
-  async ({ token, data }, { rejectWithValue }) => {
+export const getLikes = createAsyncThunk('products/getLikes', async ({ user_id }, { rejectWithValue }) => {
+  try {
+    const mylikes = await getMyLikes(user_id);
+    return mylikes;
+  } catch (error) {
+    if (error.response) {
+      return rejectWithValue({
+        message: error.response.data.message || 'Unknown error occurred',
+        status: error.response.status,
+      });
+    } else {
+      return rejectWithValue({
+        message: error.message || 'Network error',
+        status: 500,
+      });
+    }
+  }
+});
+
+export const updateProductLikeStatus = createAsyncThunk(
+  'products/updateProductLike',
+  async ({ user_id, data }, { rejectWithValue }) => {
     try {
-      const response = await ProductApi.updateProductStatus(token, data);
-      if (response.data) {
-        return response.data.products;
-      }
+      await Promise.all(
+        Object.keys(data).map(async (product_id) => {
+          if (data[product_id]) {
+            await supabase.from('Likes').upsert({ user_id, product_id }).select();
+          } else {
+            const { data: isExist, error: Notfound } = await supabase
+              .from('Likes')
+              .select('*')
+              .eq('user_id', user_id)
+              .eq('product_id', product_id);
+            if (Notfound) {
+              console.log('이미 존재하지 않는 row ', Notfound);
+              throw Notfound;
+            }
+            if (isExist) {
+              await supabase.from('Likes').delete().eq('user_id', user_id).eq('product_id', product_id).single();
+            }
+          }
+        })
+      );
+      const my_likes = await getMyLikes(user_id);
+      return my_likes;
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }
@@ -341,106 +490,21 @@ export const updateProductStatus = createAsyncThunk(
   }
 );
 
-export const findProductByKeyword = createAsyncThunk(
-  "products/findProductByKeyWord",
-  async ({ token, data }, { rejectWithValue }) => {
+export const toggleLikedIcon = createAsyncThunk(
+  'products/toggleLikedIcon',
+  async ({ liked, user_id, product_id }, { rejectWithValue }) => {
     try {
-      const response = await ProductApi.findByProductByKeyword(token, data);
-      if (response.data) {
-        return response.data;
-      }
+      const mylikes = await toggleLiked({ liked, user_id, product_id });
+      return mylikes;
     } catch (error) {
       if (error.response) {
         return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
+          message: error.response.data.message || 'Unknown error occurred',
           status: error.response.status,
         });
       } else {
         return rejectWithValue({
-          message: error.message || "Network error",
-          status: 500,
-        });
-      }
-    }
-  }
-);
-
-export const findProductByCategory = createAsyncThunk(
-  "products/findProductByCategory",
-  async ({ token, data }, { rejectWithValue }) => {
-    try {
-      const response = await ProductApi.categoriesItem(token, data);
-      if (response.data) {
-        return response.data;
-      }
-    } catch (error) {
-      if (error.response) {
-        return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
-          status: error.response.status,
-        });
-      } else {
-        return rejectWithValue({
-          message: error.message || "Network error",
-          status: 500,
-        });
-      }
-    }
-  }
-);
-
-export const findProduct = createAsyncThunk(
-  "products/findProduct",
-  async ({ product_id }, { rejectWithValue }) => {
-    try {
-      const { data: productInfo, error: productErr } = await supabase
-        .from("product")
-        .select("*")
-        .eq("id", product_id)
-        .single();
-
-      if (productErr) {
-        console.log("상품 정보 불러오던 중 에러 발생: ", productErr);
-        return;
-      }
-
-      if (productInfo) {
-        console.log("성공적으로 상품 정보를 불러왔습니다!", productInfo);
-        return productInfo;
-      }
-    } catch (error) {
-      if (error.response) {
-        return rejectWithValue({
-          message: error.response.data.message || "Unknown error occured",
-          status: error.response.status,
-        });
-      } else {
-        return rejectWithValue({
-          message: error.message || "Network error",
-          status: 500,
-        });
-      }
-    }
-  }
-);
-
-export const updateProductLike = createAsyncThunk(
-  "products/updateProductLike",
-  async ({ token, likes }, { rejectWithValue }) => {
-    try {
-      const response = await ProductApi.updatelikeProduct(token, likes);
-      if (response.data) {
-        return response.data;
-      }
-    } catch (error) {
-      if (error.response) {
-        return rejectWithValue({
-          message: error.response.data.message || "Unknown error occurred",
-          status: error.response.status,
-        });
-      } else {
-        return rejectWithValue({
-          message: error.message || "Network error",
+          message: error.message || 'Network error',
           status: 500,
         });
       }

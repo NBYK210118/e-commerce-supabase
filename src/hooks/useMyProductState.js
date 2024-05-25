@@ -1,26 +1,24 @@
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
 import {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
-} from "react-native-reanimated";
-import { useDispatch, useSelector } from "react-redux";
-import ProductApi from "../services/product_api";
+} from 'react-native-reanimated';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   deleteSellingProducts,
+  findProductByCategory,
   findProductByKeyword,
   takeSellinglist,
-} from "../features/products/product_thunk";
-import { setSellinglist } from "../features/products/product_slice";
+  updateProductStatus,
+} from '../features/products/product_thunk';
 
 export const useMyProductState = () => {
   const token = useSelector((state) => state.userAuth.token);
-  const { loading, sellinglist, categories } = useSelector(
-    (state) => state.products
-  );
+  const { loading, sellinglist, categories } = useSelector((state) => state.products);
   const { profile } = useSelector((state) => state.userAuth);
   const optionsVisible = useSelector((state) => state.userAuth.optionsVisible);
   const navigation = useNavigation();
@@ -49,17 +47,17 @@ export const useMyProductState = () => {
     } catch (error) {
       switch (error.response.status) {
         case 400:
-          navigation.navigate("My Page");
+          navigation.navigate('My Page');
         case 401:
-          navigation.navigate("Login");
+          navigation.navigate('Login');
         case 500:
-          navigation.navigate("My Page");
+          navigation.navigate('My Page');
       }
     }
     if (token && sellinglist?.length > 0) {
       setManageStatus(
         sellinglist.reduce((acc, val) => {
-          acc[val.id] = val.status === "판매중" ? true : false;
+          acc[val.id] = val.status === '판매중' ? true : false;
           return acc;
         }, {})
       );
@@ -70,6 +68,12 @@ export const useMyProductState = () => {
     useCallback(() => {
       if (sellinglist?.length > 0) {
         setCheckStatus(
+          sellinglist.reduce((acc, val) => {
+            acc[val.id] = false;
+            return acc;
+          }, {})
+        );
+        setManageStatus(
           sellinglist.reduce((acc, val) => {
             acc[val.id] = false;
             return acc;
@@ -88,55 +92,23 @@ export const useMyProductState = () => {
     }, [])
   );
 
-  useEffect(() => {
-    if (Object.keys(manageStatus).length > 0) {
-      try {
-        ProductApi.updateProductStatus(
-          token,
-          (data = JSON.stringify(manageStatus))
-        ).then((response) => {
-          if (response.data) {
-            dispatch(setSellinglist(response.data.products));
-          }
-        });
-      } catch (error) {
-        switch (error.response.status) {
-          case 400:
-            navigation.navigate("My Page");
-          case 401:
-            navigation.navigate("My Page");
-          case 500:
-            navigation.navigate("My Page");
-        }
-      }
-    }
-  }, [manageStatus]);
-
   useFocusEffect(
     useCallback(() => {
       if (!token) {
-        alert("로그인이 필요합니다");
-        navigation.navigate("Login");
+        alert('로그인이 필요합니다');
+        navigation.navigate('Login');
       }
     }, [token, navigation])
   );
 
   useEffect(() => {
-    if (
-      sellinglist?.length === 0 ||
-      sellinglist === undefined ||
-      sellinglist === null
-    ) {
+    if (sellinglist?.length === 0 || sellinglist === undefined || sellinglist === null) {
       opacity.value = withRepeat(withTiming(0.7, { duration: 1000 }), -1, true);
     } else {
       if (!loading) {
         opacity.value = withTiming(0, { duration: 1000 });
       } else {
-        opacity.value = withRepeat(
-          withTiming(0.28, { duration: 1000 }),
-          -1,
-          true
-        );
+        opacity.value = withRepeat(withTiming(0.28, { duration: 1000 }), -1, true);
       }
     }
   }, [loading, opacity, navigation]);
@@ -165,25 +137,23 @@ export const useMyProductState = () => {
         Object.keys(prevState).forEach((key) => {
           if (key !== category) newState[key] = false;
         });
-        const allUnChecked = Object.keys(newState).every(
-          (key) => !newState[key]
-        );
+        const allUnChecked = Object.keys(newState).every((key) => !newState[key]);
 
         try {
           if (allUnChecked) {
-            dispatch(getSellinglist({ token, limit: currentLimit }));
+            dispatch(takeSellinglist({ profile }));
           } else {
-            dispatch(findProductByCategory({ token, data: category }));
+            dispatch(findProductByCategory({ user_id: profile.user_id, category }));
           }
         } catch (error) {
           if (error.response !== undefined) {
             switch (error.response.status) {
               case 401:
-                navigation.navigate("Login");
+                navigation.navigate('Login');
               case 400:
-                navigation.navigate("My Page");
+                navigation.navigate('My Page');
               case 500:
-                navigation.navigate("My Page");
+                navigation.navigate('My Page');
             }
           }
         }
@@ -193,10 +163,23 @@ export const useMyProductState = () => {
   };
 
   const handleProductStatus = (product_id) => {
-    setManageStatus({
+    const data = {
       ...manageStatus,
       [product_id]: !manageStatus[product_id],
-    });
+    };
+    try {
+      setManageStatus(data);
+      dispatch(updateProductStatus({ data, user_id: profile.user_id }));
+    } catch (error) {
+      switch (error.response.status) {
+        case 400:
+          navigation.navigate('My Page');
+        case 401:
+          navigation.navigate('My Page');
+        case 500:
+          navigation.navigate('My Page');
+      }
+    }
   };
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -213,37 +196,37 @@ export const useMyProductState = () => {
       } catch (error) {
         switch (error.response.status) {
           case 400:
-            navigation.navigate("My Page");
+            navigation.navigate('My Page');
           case 401:
-            navigation.navigate("My Page");
+            navigation.navigate('My Page');
           case 500:
-            navigation.navigate("My Page");
+            navigation.navigate('My Page');
         }
       }
     } else {
-      alert("취소하시려는 상품을 선택해주세요");
+      alert('취소하시려는 상품을 선택해주세요');
     }
   };
 
   const searchByKeyword = (keyword, setKeyword) => {
     try {
-      dispatch(findProductByKeyword({ token, data: keyword }));
+      dispatch(findProductByKeyword({ data: keyword, user_id: profile.user_id }));
     } catch (error) {
       switch (error.response.status) {
         case 400:
-          navigation.navigate("My Page");
+          navigation.navigate('My Page');
         case 401:
-          navigation.navigate("My Page");
+          navigation.navigate('My Page');
         case 500:
-          navigation.navigate("My Page");
+          navigation.navigate('My Page');
       }
     } finally {
-      setKeyword("");
+      setKeyword('');
     }
   };
 
   const handleUpdateBtn = (product_id) => {
-    navigation.navigate("Manage", { product_id });
+    navigation.navigate('Manage', { product_id });
   };
 
   return {

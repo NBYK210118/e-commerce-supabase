@@ -1,22 +1,9 @@
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useRef, useState } from 'react';
-import {
-  Button,
-  Dimensions,
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { primary_gray } from '../../../styles/common/colors';
 import Modal from 'react-native-modal';
-import * as FileSystem from 'expo-file-system';
-import { decode } from 'base64-arraybuffer';
 
 export const ImageUploadStep = (props) => {
   const accessToGallery = useSelector((state) => state.userAuth.accessToGallery);
@@ -60,13 +47,8 @@ export const ImageUploadStep = (props) => {
       return;
     }
     const file = pickerResult.assets[0];
-    const fileExtension = file.mimeType.split('/')[1];
-    const fileUri = file.uri;
-    const base64 = await FileSystem.readAsStringAsync(fileUri, { encoding: 'base64' });
 
-    props.setImage(fileUri);
-    props.setImgType(fileExtension);
-    props.setImgObjectToBucket(base64);
+    props.setImage(file.uri);
   };
 
   return (

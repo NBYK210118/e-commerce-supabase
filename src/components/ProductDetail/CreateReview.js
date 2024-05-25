@@ -2,28 +2,34 @@ import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 import StarRating from './stars';
 import { primary_blue, primary_gray } from '../../styles/common/colors';
 import { useState } from 'react';
+import { supabase } from '../../supabase';
 
-export const CreateReview = ({ user, handlePostReview, navigation, selectedProductId }) => {
+export const CreateReview = ({ profile, handlePostReview, navigation }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
 
   const onPost = () => {
     if (user !== undefined && user && user !== null) {
-      handlePostReview({ stars: rating, review, productId: selectedProductId });
+      handlePostReview({ stars: rating, review });
     } else {
       alert('로그인이 필요합니다');
       navigation.navigate('Login');
     }
   };
 
+  const path = profile?.imgFile.path;
+  const { data } = supabase.storage.from('UserProfile').getPublicUrl(path);
+  const imgExisted = data.publicUrl.split('/').pop() !== 'undefined';
+  console.log('create review: ', data.publicUrl);
+
   return (
     <View style={styles.container}>
       <View>
-        <Image source={{ uri: 'https://via.placeholder.com/100' }} style={styles.image} />
+        <Image source={{ uri: imgExisted ? data.publicUrl : 'https://via.placeholder.com/100' }} style={styles.image} />
       </View>
       <View style={styles.detail}>
         <View style={styles.wrapper}>
-          <Text style={styles.nickname}>{user ? user?.profile?.nickname : '로그인이 필요한 기능입니다'}</Text>
+          <Text style={styles.nickname}>{profile?.nickname ? profile.nickname : '로그인이 필요한 기능입니다'}</Text>
           <View style={styles.stars}>
             <StarRating rating={rating} setRating={setRating} />
           </View>
@@ -62,7 +68,7 @@ const styles = StyleSheet.create({
   post_btn: {
     position: 'absolute',
     padding: 8,
-    top: -5,
+    top: 0,
     right: 0,
     paddingHorizontal: 15,
     borderRadius: 5,

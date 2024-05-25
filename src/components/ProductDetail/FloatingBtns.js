@@ -2,18 +2,14 @@ import { AntDesign } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { primary_blue } from '../../styles/common/colors';
 
-export const FloatingBtns = ({ currentProduct, heart, onPress }) => {
+export const FloatingBtns = ({ currentProduct, isLiked, likedCount, onPress }) => {
   return (
     <View>
       <View style={styles.fixed_btns}>
         <Pressable style={styles.fixed_left_btn} onPress={onPress}>
           <View style={{ flexDirection: 'column', alignItems: 'center', marginRight: 7 }}>
-            <AntDesign
-              name={`${currentProduct && heart[currentProduct.id] ? 'heart' : 'hearto'}`}
-              size={20}
-              color={`${currentProduct && heart[currentProduct.id] ? 'red' : 'black'}`}
-            />
-            {currentProduct && <Text style={{ fontSize: 14 }}>{currentProduct.likedBy.length}</Text>}
+            <AntDesign name={`${isLiked ? 'heart' : 'hearto'}`} size={20} color={`${isLiked ? 'red' : 'black'}`} />
+            {currentProduct && <Text style={{ fontSize: 14 }}>{likedCount}</Text>}
           </View>
         </Pressable>
         <Pressable style={styles.fixed_right_btn}>

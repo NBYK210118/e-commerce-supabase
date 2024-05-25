@@ -122,32 +122,6 @@ export const getUserLocation = createAsyncThunk('shopping/getUserLocation', asyn
   }
 });
 
-export const verifyToken = createAsyncThunk(
-  'shopping/verifyToken',
-  async ({ token, navigation }, { rejectWithValue }) => {
-    try {
-      const response = await DataService.verifyToken(token, navigation);
-      if (response.data) {
-        return response.data;
-      } else {
-        return 'Fail';
-      }
-    } catch (error) {
-      if (error.response) {
-        return rejectWithValue({
-          message: error.response.data.message || 'Unknown error occurred',
-          status: error.response.status,
-        });
-      } else {
-        return rejectWithValue({
-          message: error.message || 'Network error',
-          status: 500,
-        });
-      }
-    }
-  }
-);
-
 export const updateProfile = createAsyncThunk(
   'shopping/updateProfile',
   async ({ data, user, navigation }, { rejectWithValue }) => {

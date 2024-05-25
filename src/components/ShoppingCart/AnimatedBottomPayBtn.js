@@ -2,8 +2,9 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { primary_blue, primary_gray } from '../../styles/common/colors';
+import React from 'react';
 
-export const AnimatedBottomButton = ({ modalStyle, productSummary }) => {
+const AnimatedBottomButton = ({ modalStyle, productSummary }) => {
   return (
     <Animated.View style={[styles.pay_wrapper, modalStyle]}>
       <TouchableOpacity style={styles.watch_more}>
@@ -23,7 +24,8 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     position: 'absolute',
-    bottom: -100,
+    bottom: -90,
+    right: 0,
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -57,3 +59,5 @@ const styles = StyleSheet.create({
   pay_btn_txt: { color: 'white', fontWeight: 'bold', fontSize: 19, textAlign: 'center', marginBottom: 5 },
   how_much: { color: 'white', fontWeight: 'bold', fontSize: 14 },
 });
+
+export default React.memo(AnimatedBottomButton);

@@ -2,35 +2,45 @@ import { AntDesign } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { primary_gray } from '../../styles/common/colors';
+import { supabase } from '../../supabase';
+import React from 'react';
 
-export const BasketProduct = ({ item, idx, onCheck, status, onClose, handleModal }) => {
+export const BasketProduct = ({
+  item,
+  idx,
+  onCheck,
+  status,
+  onClose,
+  handleModal,
+  inventory_status,
+  currentProductId,
+}) => {
   if (item !== undefined) {
-    const origin_price = (item.product.price * item.quantity).toLocaleString('ko-kr');
-    const discountedPrice = (item.product.discountPrice * item.quantity).toLocaleString('ko-kr');
+    const count = inventory_status[currentProductId];
+    const origin_price = (item.price * count).toLocaleString('ko-kr');
+    const discountedPrice = (item.discountprice * count).toLocaleString('ko-kr');
+    const path = JSON.parse(item.imgFile).path;
+    const { data } = supabase.storage.from('Products').getPublicUrl(path);
     return (
       <View key={idx} style={styles.wrapper}>
-        <Checkbox
-          value={status[item.product.id]}
-          onValueChange={() => onCheck(item.product.id)}
-          style={styles.checkbox}
-        />
-        <Image source={{ uri: item.product.images[0].imgUrl }} style={styles.product_img} />
+        <Checkbox value={status[item.id]} onValueChange={() => onCheck(item.id)} style={styles.checkbox} />
+        <Image source={{ uri: data.publicUrl }} style={styles.product_img} />
         <View style={styles.info}>
-          <Text style={{ fontSize: 12, marginVertical: 2 }}>{item.product.manufacturer}</Text>
+          <Text style={{ fontSize: 12, marginVertical: 2 }}>{item.manufacturer}</Text>
           <Text style={{ fontWeight: 'bold', marginVertical: 2 }} numberOfLines={1} ellipsizeMode="head">
-            {item.product.name}
+            {item.name}
           </Text>
-          <Text style={{ marginVertical: 2 }}>수량 {item.quantity}개</Text>
-          <TouchableOpacity style={styles.touchInventory} onPress={() => handleModal(item.product.id)}>
+          <Text style={{ marginVertical: 2 }}>수량 {count}개</Text>
+          <TouchableOpacity style={styles.touchInventory} onPress={() => handleModal(item.id)}>
             <Text style={styles.touchInventory_txt}>수량</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.side_wrapper}>
-          <TouchableOpacity style={styles.close} onPress={() => onClose(item.product.id)}>
+          <TouchableOpacity style={styles.close} onPress={() => onClose(item.id)}>
             <AntDesign name="close" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={[item.product.isDiscounting && styles.ifdiscount, styles.price]}>{origin_price}원</Text>
-          {item.product.isDiscounting && <Text style={styles.discount}>{discountedPrice}원</Text>}
+          <Text style={[item.isdiscounting && styles.ifdiscount, styles.price]}>{origin_price}원</Text>
+          {item.isdiscounting && <Text style={styles.discount}>{discountedPrice}원</Text>}
         </View>
       </View>
     );

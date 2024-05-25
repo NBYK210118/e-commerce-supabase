@@ -21,6 +21,20 @@ export const useHomeHooks = () => {
   const dispatch = useDispatch();
   const scrollY = useSharedValue(0);
 
+  // const test = async () => {
+  //   const { data, error } = await supabase.rpc('get_user_id');
+
+  //   if (error) {
+  //     console.error('Error fetching user id:', error.message);
+  //   } else {
+  //     console.log('User IDs:', data);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   test();
+  // }, []);
+
   useFocusEffect(
     useCallback(() => {
       if (
@@ -28,7 +42,6 @@ export const useHomeHooks = () => {
         currentLocation === undefined ||
         currentLocation === null
       ) {
-        console.log('user: ', user);
         dispatch(getUserLocation(user));
       }
     }, [user, token, currentLocation])

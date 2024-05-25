@@ -1,16 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
 export const Pagination = ({ contents = [], current }) => {
-  if (contents !== null && contents.length > 0) {
+  if (contents !== null && contents.length > 1) {
     return (
       <>
-        {contents.length > 0 && (
-          <View key={`view-${current}`} style={styles.paginationContainer}>
-            {contents.map((_, idx) => (
-              <View key={idx} style={[styles.paginationDot, current === idx ? styles.activeDot : styles.inactiveDot]} />
-            ))}
-          </View>
-        )}
+        <View key={`view-${current}`} style={styles.paginationContainer}>
+          {contents.map((_, idx) => (
+            <View key={idx} style={[styles.paginationDot, current === idx ? styles.activeDot : styles.inactiveDot]} />
+          ))}
+        </View>
       </>
     );
   }

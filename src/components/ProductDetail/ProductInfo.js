@@ -1,15 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { primary_gray } from '../../styles/common/colors';
 import { AntDesign } from '@expo/vector-icons';
-export const ProductInfo = ({ currentProduct, currentStars }) => {
+export const ProductInfo = ({ currentProduct, currentStars, reviews }) => {
   if (currentProduct) {
+    console.log('reviews: ', reviews.length);
     return (
       <>
         <View style={styles.wrapper}>
-          <Text style={styles.category}>{currentProduct.category_name}</Text>
+          <Text style={styles.category}>{currentProduct.category}</Text>
           <Text style={styles.name}>{currentProduct.name}</Text>
           <View style={styles.mid}>
-            <View style={styles.stars_arrange}>
+            {/* <View style={styles.stars_arrange}>
               {[...Array(currentStars > 0 ? currentStars : 5)].map((_, idx) => (
                 <AntDesign
                   key={idx}
@@ -18,24 +19,24 @@ export const ProductInfo = ({ currentProduct, currentStars }) => {
                   color={currentStars > 0 ? '#f4cf0f' : 'gray'}
                 />
               ))}
-            </View>
+            </View> */}
             <View style={styles.star_count}>
-              <Text style={styles.star_count_txt}>{Math.round(currentStars).toFixed(1)}</Text>
+              {/* <Text style={styles.star_count_txt}>{Math.round(currentStars).toFixed(1)}</Text> */}
             </View>
             <View style={styles.review_wrap}>
-              <Text style={styles.review_txt}>후기 {currentProduct.reviews.length}개</Text>
+              <Text style={styles.review_txt}>후기 {reviews.length}개</Text>
             </View>
           </View>
-          {currentProduct.isDiscount && (
+          {currentProduct.isdiscount && (
             <View style={styles.price}>
-              <Text style={styles.price_txt}>{currentProduct.discountPrice.toLocaleString('ko-kr')}원</Text>
+              <Text style={styles.price_txt}>{currentProduct.discountprice.toLocaleString('ko-kr')}원</Text>
             </View>
           )}
           <View style={styles.origin_price}>
             <Text
               style={[
                 styles.origin_price_txt,
-                !currentProduct.isDiscount ? { textDecorationLine: 'none', color: 'black', fontWeight: 'bold' } : '',
+                !currentProduct.isdiscounting ? { textDecorationLine: 'none', color: 'black', fontWeight: 'bold' } : '',
               ]}
             >
               {currentProduct.price.toLocaleString('ko-kr')}원
@@ -46,7 +47,7 @@ export const ProductInfo = ({ currentProduct, currentStars }) => {
           <View style={styles.description}>
             <Text style={styles.description_label}>제품 설명: </Text>
             <Text style={styles.description_txt}>
-              {currentProduct.description.length > 0 ? currentProduct.description : '상품 상세설명이 없습니다!'}
+              {currentProduct.description ? currentProduct.description : '상품 상세설명이 없습니다!'}
             </Text>
           </View>
           <View style={styles.manufacturer}>
@@ -67,8 +68,8 @@ const styles = StyleSheet.create({
   stars_arrange: { flexDirection: 'row', alignItems: 'center', marginRight: 10 },
   star_count: { marginTop: 2, marginRight: 10 },
   star_count_txt: { color: 'gray' },
-  review_wrap: { marginTop: 2 },
-  review_txt: { color: '#0096FF', fontWeight: '800' },
+  review_wrap: { marginTop: 2, marginLeft: -6 },
+  review_txt: { color: '#0096FF', fontSize: 16, fontWeight: '800' },
   price: { marginTop: 5 },
   price_txt: { fontSize: 20, fontWeight: '600' },
   origin_price: { marginTop: 10, marginBottom: 20 },

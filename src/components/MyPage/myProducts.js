@@ -92,24 +92,27 @@ export const MyProducts = () => {
       {loading ? (
         <LoadingSkeleton loadingStyle={animatedStyle} />
       ) : (
-        <Animated.FlatList
-          data={sellinglist || []}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <ProductItem
-              item={item}
-              index={index}
-              scrollY={scrollY}
-              handleProductStatus={handleProductStatus}
-              handleChecked={handleChecked}
-              checkStatus={checkStatus}
-              handleUpdateBtn={handleUpdateBtn}
-            />
-          )}
-          onScroll={scrollHandler}
-          scrollEventThrottle={18}
-          style={animatedStyle2}
-        />
+        sellinglist &&
+        sellinglist.length > 0 && (
+          <Animated.FlatList
+            data={sellinglist}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item, index }) => (
+              <ProductItem
+                item={item}
+                index={index}
+                scrollY={scrollY}
+                handleProductStatus={handleProductStatus}
+                handleChecked={handleChecked}
+                checkStatus={checkStatus}
+                handleUpdateBtn={handleUpdateBtn}
+              />
+            )}
+            onScroll={scrollHandler}
+            scrollEventThrottle={18}
+            style={animatedStyle2}
+          />
+        )
       )}
 
       <ProductButton navigation={navigation} deleteProducts={deleteProducts} />

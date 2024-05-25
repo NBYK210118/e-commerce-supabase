@@ -2,7 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { primary_gray } from '../../styles/common/colors';
 import { AntDesign, Feather } from '@expo/vector-icons';
 
-export const HeartBasket = ({ currentProduct, heart, onPress, onPressBasket }) => {
+export const HeartBasket = ({ currentProduct, isLiked, onPress, onPressBasket }) => {
   if (currentProduct) {
     return (
       <View style={styles.btn_row}>
@@ -15,9 +15,9 @@ export const HeartBasket = ({ currentProduct, heart, onPress, onPressBasket }) =
         <View>
           <TouchableOpacity style={styles.like_btn} onPress={onPress}>
             <AntDesign
-              name={`${heart[currentProduct.id] ? 'heart' : 'hearto'}`}
+              name={`${isLiked ? 'heart' : 'hearto'}`}
               size={24}
-              color={`${heart[currentProduct.id] ? 'red' : 'black'}`}
+              color={`${isLiked ? 'red' : 'black'}`}
               style={styles.heart}
             />
             <Text>좋아요</Text>

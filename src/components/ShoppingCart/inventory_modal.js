@@ -2,7 +2,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { primary_blue, primary_gray } from '../../styles/common/colors';
 
-export const InventoryModal = ({ modalOpen, setModalOpen, touchSign, quantity, setQuantity, onSubmitChange }) => {
+export const InventoryModal = ({ modalOpen, setModalOpen, touchSign, quantity = 1, setQuantity, onSubmitChange }) => {
   return (
     <Modal
       animationType="slide"
@@ -38,7 +38,7 @@ export const InventoryModal = ({ modalOpen, setModalOpen, touchSign, quantity, s
               <TextInput
                 value={quantity.toString()}
                 onChangeText={(txt) => setQuantity(Number(txt))}
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 style={{ width: 150, height: 50, paddingLeft: 5, fontSize: 22, textAlign: 'center' }}
               />
             </View>
